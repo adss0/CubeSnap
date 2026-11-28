@@ -1,7 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { describeMove, parseAlgorithm } from '../cube/moves'
 import { colorsFromFacelets, statesAlong } from '../cube/state'
 import { CubeNet } from './CubeNet'
+import { useSolutionPlayer } from './useSolutionPlayer'
+
+const Cube3D = lazy(() => import('./Cube3D').then((module) => ({ default: module.Cube3D })))
+
+type View = '3d' | 'net'
+
+const MOVE_DURATION_MS = 450
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 type SolutionStepperProps = {
   startFacelets: string
@@ -15,21 +25,25 @@ export const SolutionStepper = ({ startFacelets, solution, onDone }: SolutionSte
     () => statesAlong(startFacelets, moves.map((move) => move.notation)),
     [startFacelets, moves],
   )
-  const [step, setStep] = useState(0)
-  const isFinished = step === moves.length
-  const nextMove = moves[step]
-
-  const goBack = () => setStep((s) => Math.max(0, s - 1))
-  const goForward = () => setStep((s) => Math.min(moves.length, s + 1))
+  const [view, setView] = useState<View>('3d')
+  const [resetViewSignal, setResetViewSignal] = useState(0)
+  const animate = view === '3d' && !prefersReducedMotion()
+  const player = useSolutionPlayer(moves, animate)
+  const { step, isFinished, playing, animation, displayStep } = player
+  const currentMove = animation?.move ?? moves[step]
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight' || event.key === ' ') goForward()
-      if (event.key === 'ArrowLeft') goBack()
+      if (event.key === 'ArrowRight') player.stepForward()
+      if (event.key === 'ArrowLeft') player.stepBack()
+      if (event.key === ' ') {
+        event.preventDefault()
+        player.togglePlay()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  })
+  }, [player])
 
   return (
     <section className="stepper">
@@ -43,7 +57,7 @@ export const SolutionStepper = ({ startFacelets, solution, onDone }: SolutionSte
                 i < step ? 'move-chip--done' : '',
                 i === step ? 'move-chip--current' : '',
               ].join(' ')}
-              onClick={() => setStep(i)}
+              onClick={() => player.jumpTo(i)}
             >
               {move.notation}
             </button>
@@ -62,29 +76,69 @@ export const SolutionStepper = ({ startFacelets, solution, onDone }: SolutionSte
             <p className="step-count">
               Step {step + 1} of {moves.length}
             </p>
-            <h2 className="step-notation">{nextMove.notation}</h2>
-            <p>{describeMove(nextMove)}</p>
+            <h2 className="step-notation">{moves[step].notation}</h2>
+            <p>{describeMove(moves[step])}</p>
           </>
         )}
       </div>
 
-      <CubeNet colors={colorsFromFacelets(states[step])} highlightFace={nextMove?.face} />
+      <div className="view-bar">
+        <div className="segmented" role="radiogroup" aria-label="Cube view">
+          {(['3d', 'net'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="radio"
+              aria-checked={view === option}
+              className={view === option ? 'segment segment--active' : 'segment'}
+              onClick={() => setView(option)}
+            >
+              {option === '3d' ? '3D' : 'Net'}
+            </button>
+          ))}
+        </div>
+        {view === '3d' && (
+          <button type="button" className="link-button" onClick={() => setResetViewSignal((n) => n + 1)}>
+            Reset view
+          </button>
+        )}
+      </div>
+
+      {view === '3d' ? (
+        <Suspense fallback={<CubeNet colors={colorsFromFacelets(states[displayStep])} />}>
+          <Cube3D
+            facelets={states[displayStep]}
+            animation={animation}
+            durationMs={MOVE_DURATION_MS}
+            onAnimationEnd={player.finishAnimation}
+            highlightFace={currentMove?.face}
+            resetViewSignal={resetViewSignal}
+          />
+        </Suspense>
+      ) : (
+        <CubeNet colors={colorsFromFacelets(states[displayStep])} highlightFace={currentMove?.face} />
+      )}
 
       <div className="actions">
-        <button type="button" onClick={goBack} disabled={step === 0}>
+        <button type="button" onClick={player.stepBack} disabled={step === 0 || animation !== undefined}>
           ← Previous
+        </button>
+        <button type="button" onClick={player.togglePlay} aria-pressed={playing}>
+          {playing ? '❚❚ Pause' : '▶ Play'}
         </button>
         {isFinished ? (
           <button type="button" className="primary" onClick={onDone}>
             Solve another
           </button>
         ) : (
-          <button type="button" className="primary" onClick={goForward}>
+          <button type="button" className="primary" onClick={player.stepForward} disabled={animation !== undefined}>
             Done, next →
           </button>
         )}
       </div>
-      <p className="hint">Tip: use the ← → arrow keys or Space to step.</p>
+      <p className="hint">
+        The highlighted layer is the one to turn. Drag the cube to look around. Keys: ← → to step, Space to play/pause.
+      </p>
     </section>
   )
 }

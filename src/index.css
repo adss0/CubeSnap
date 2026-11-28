@@ -269,3 +269,49 @@ button:disabled {
   font-family: ui-monospace, 'Cascadia Code', monospace;
   font-size: 2rem;
 }
+
+/* 3D view */
+.view-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2px;
+  background: var(--surface);
+}
+
+.segment {
+  border: 0;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.segment--active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.link-button {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  padding: 6px 0;
+}
+
+.cube-3d {
+  height: min(70vw, 360px);
+  margin: 8px 0;
+  cursor: grab;
+}
+
+.cube-3d:active {
+  cursor: grabbing;
+}

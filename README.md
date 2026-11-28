@@ -31,7 +31,7 @@ All of it is free and open source, and there is no backend.
 | --- | --- | --- |
 | 0 | Foundation: repo, scaffold, tests, plan | ✅ Done |
 | 1 | Cube engine, validator, fast solver, manual colour input, step-by-step stepper | 🚧 In progress |
-| 2 | 3D cube with animated moves | ⏳ |
+| 2 | 3D cube with animated moves | ✅ Done |
 | 3 | Camera capture and colour detection, with tap-to-fix review | ⏳ |
 | 4 | Beginner (layer-by-layer) mode with explanations | ⏳ |
 | 5 | PWA/offline, accessibility, CI and deploy to GitHub Pages | ⏳ |

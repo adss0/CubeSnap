@@ -60,11 +60,13 @@
 
 **Done when:** you can paint a real scrambled cube into the net and solve it by following the steps.
 
-### Phase 2: 3D cube and animated moves
-- [ ] Render the cube state with @react-three/fiber
-- [ ] Animate each move (quarter and half turns), with play/pause/step controls
-- [ ] Orbit controls, plus a "reset view" back to white-up/green-front
-- [ ] Highlight the face that is about to turn
+### Phase 2: 3D cube and animated moves ✅
+- [x] Sticker geometry model (`geometry.ts`), tested against the solver for all 18 moves
+- [x] Render the cube state with @react-three/fiber, lazy-loaded so the editor stays light
+- [x] Animate each move (quarter and half turns), with play/pause/step controls; stepping back plays the inverse turn
+- [x] Orbit controls, plus a "reset view" back to white-up/green-front
+- [x] Highlight the face that is about to turn (the other layers are dimmed)
+- [x] 3D / Net toggle; respects `prefers-reduced-motion` (steps change instantly)
 
 **Done when:** each step shows an animated 3D turn that matches the real cube.
 
@@ -90,6 +92,7 @@
 - [ ] vite-plugin-pwa: manifest, icons, offline cache (including the solver worker)
 - [ ] Remember the last cube and step
 - [ ] Accessibility: colour-blind sticker labels (W/Y/R/O/G/B), keyboard stepping
+- [ ] Trim the 3D chunk (about 250 KB gzipped): drop drei for three's own OrbitControls and plain geometry
 - [ ] GitHub Actions: lint, test, build, then deploy to GitHub Pages
 
 **Done when:** it is installable on a phone from the Pages URL and works offline.
